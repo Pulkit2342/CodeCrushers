@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Crushers Task Management</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #F1F8E9;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    nav {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+    }
+    nav h1 {
+      margin: 0;
+      font-size: 1.5em;
+    }
+    nav button {
+      background-color: #388E3C;
+      width: 80px;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+      margin-left: auto;
+    }
+    nav button:hover {
+      background-color: #2E7D32;
+    }
+    .container {
+      margin: 20px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      width: 80%;
+      max-width: 700px;
+      box-sizing: border-box;
+    }
+    .hidden {
+      display: none;
+    }
+    .error, .success {
+      font-size: 0.9em;
+    }
+    .error {
+      color: #e74c3c;
+    }
+    .success {
+      color: #27ae60;
+    }
+    .dashboard {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .dashboard .task-section, .dashboard .assigned-tasks, .dashboard .performance-section {
+      flex: 1;
+      min-width: 280px;
+    }
+    input, select, button {
+      width: calc(100% - 20px);
+      margin: 5px 0;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      box-sizing: border-box;
+      font-size: 0.9em;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    button:hover {
+      background-color: #388E3C;
+    }
+    ul {
+      padding: 0;
+      list-style-type: none;
+    }
+    ul li {
+      background: #F4F4F4;
+      margin: 5px 0;
+      padding: 8px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .assigned-tasks button, .performance-section button {
+      background-color: #e74c3c;
+      font-size: 0.8em;
+      margin-left: 10px;
+    }
+    .assigned-tasks button:hover, .performance-section button:hover {
+      background-color: #c0392b;
+    }
+    .complete-button {
+      background-color: #FFC107;
+      font-size: 0.8em;
+      width: 100px;
+    }
+    .complete-button:hover {
+      background-color: #FFB300;
+    }
+    footer {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      position: relative;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav>
+    <h1>Code Crushers</h1>
+    <button id="nav-btn">Login</button>
+  </nav>
+
+  <!-- Login Page -->
+  <div id="login-page" class="container">
+    <h2>Login</h2>
+    <form id="login-form">
+      <label for="username">Username</label>
+      <input type="text" id="username" required />
+      <label for="password">Password</label>
+      <input type="password" id="password" required />
+      <button type="submit">Login</button>
+      <p id="login-error" class="error"></p>
+    </form>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <div id="admin-dashboard" class="container hidden">
+    <h2>Admin Dashboard - Task Management</h2>
+    <div class="dashboard">
+      <div class="task-section">
+        <h3>Create New Task</h3>
+        <form id="task-form">
+          <label for="task-name">Task Name</label>
+          <input type="text" id="task-name" required />
+          <label for="task-desc">Task Description</label>
+          <input type="text" id="task-desc" required />
+          <label for="task-deadline">Task Deadline</label>
+          <input type="date" id="task-deadline" required />
+          <label for="task-priority">Task Priority</label>
+          <select id="task-priority" required>
+            <option value="High">High Priority</option>
+            <option value="Medium">Medium Priority</option>
+            <option value="Low">Low Priority</option>
+          </select>
+          <label for="task-category">Category</label>
+          <input type="text" id="task-category" required />
+          <label for="task-assignee">Assignee</label>
+          <select id="task-assignee" required>
+            <option value="Prabhash">Prabhash</option>
+            <option value="Pulkit">Pulkit</option>
+          </select>
+          <button type="submit">Add Task</button>
+        </form>
+        <p id="task-success" class="success"></p>
+      </div>
+      <div class="assigned-tasks">
+        <h3>Assigned Tasks</h3>
+        <ul id="admin-task-list"></ul>
+      </div>
+      <div class="performance-section">
+        <h3>Employee Performance</h3>
+        <ul id="performance-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2024 Code Crushers. All Rights Reserved.</p>
+  </footer>
+
+  <script>
+    // Data Store
+    let tasks = [];
+    let employees = {
+      'Prabhash': { leavesTaken: 2, progress: 60 },
+      'Pulkit': { leavesTaken: 1, progress: 40 }
+    };
+
+    // Toggle Navbar Button
+    const navButton = document.getElementById('nav-btn');
+
+    function updateNavbar() {
+      if (document.getElementById('login-page').classList.contains('hidden')) {
+        navButton.textContent = 'Logout';
+      } else {
+        navButton.textContent = 'Login';
+      }
+    }
+
+    // Login Page Functionality
+    document.getElementById('login-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      if (username === 'admin' && password === 'admin') {
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        document.getElementById('employee-dashboard').classList.add('hidden');
+        renderPerformanceSection(); // Show performance section
+        updateNavbar();
+      } else if (username === 'employee' && password === 'employee') {
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('employee-dashboard').classList.remove('hidden');
+        document.getElementById('admin-dashboard').classList.add('hidden');
+        renderEmployeeTasks(username);
+        updateEmployeeInfo(username);
+        updateNavbar();
+      } else {
+        document.getElementById('login-error').textContent = 'Invalid username or password';
+      }
+    });
+
+    // Task Management for Admin
+    document.getElementById('task-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const taskName = document.getElementById('task-name').value;
+      const taskDesc = document.getElementById('task-desc').value;
+      const taskDeadline = document.getElementById('task-deadline').value;
+      const taskPriority = document.getElementById('task-priority').value;
+      const taskCategory = document.getElementById('task-category').value;
+      const taskAssignee = document.getElementById('task-assignee').value;
+
+      const newTask = {
+        id: Date.now(),
+        name: taskName,
+        description: taskDesc,
+        deadline: taskDeadline,
+        priority: taskPriority,
+        category: taskCategory,
+        assignee: taskAssignee
+      };
+
+      tasks.push(newTask);
+      renderAdminTaskList();
+      renderPerformanceSection(); // Update performance section
+      document.getElementById('task-success').textContent = 'Task added successfully!';
+      document.getElementById('task-form').reset();
+    });
+
+    function renderAdminTaskList() {
+      const adminTaskList = document.getElementById('admin-task-list');
+      adminTaskList.innerHTML = '';
+      tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.textContent = `${task.name} - ${task.description} - Deadline: ${task.deadline} - Priority: ${task.priority} - Category: ${task.category}`;
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.onclick = () => deleteTask(task.id);
+        li.appendChild(deleteBtn);
+        adminTaskList.appendChild(li);
+      });
+    }
+
+    function deleteTask(taskId) {
+      tasks = tasks.filter(task => task.id !== taskId);
+      renderAdminTaskList();
+      renderPerformanceSection(); // Update performance section
+    }
+
+    // Render Employee Performance Section
+    function renderPerformanceSection() {
+      const performanceList = document.getElementById('performance-list');
+      performanceList.innerHTML = '';
+      Object.keys(employees).forEach(employee => {
+        const li = document.createElement('li');
+        li.textContent = `${employee} - Leaves Taken: ${employees[employee].leavesTaken}, Progress: ${employees[employee].progress}%`;
+        performanceList.appendChild(li);
+      });
+    }
+
+    // Employee Dashboard Functionality
+    function renderEmployeeTasks(username) {
+      const employeeTaskList = document.getElementById('employee-task-list');
+      employeeTaskList.innerHTML = '';
+      const filteredTasks = tasks.filter(task => task.assignee === username);
+      filteredTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.textContent = `${task.name} - ${task.description} - Deadline: ${task.deadline}`;
+        const completeBtn = document.createElement('button');
+        completeBtn.textContent = 'Complete';
+        completeBtn.classList.add('complete-button');
+        completeBtn.onclick = () => completeTask(task.id);
+        li.appendChild(completeBtn);
+        employeeTaskList.appendChild(li);
+      });
+    }
+
+    function completeTask(taskId) {
+      tasks = tasks.filter(task => task.id !== taskId);
+      renderEmployeeTasks(document.getElementById('username').value); 
+      renderAdminTaskList();
+      renderPerformanceSection(); // Update performance section
+    }
+
+    // Employee Info Section
+    function updateEmployeeInfo(username) {
+      const employeeData = employees[username];
+      document.getElementById('leave-count').textContent = employeeData.leavesTaken;
+      document.getElementById('progress-count').textContent = employeeData.progress;
+    }
+
+    // Logout Functionality
+    navButton.addEventListener('click', function () {
+      if (navButton.textContent === 'Logout') {
+        document.getElementById('login-page').classList.remove('hidden');
+        document.getElementById('admin-dashboard').classList.add('hidden');
+        document.getElementById('employee-dashboard').classList.add('hidden');
+        updateNavbar();
+      }
+    });
+  </script>
+
+</body>
+</html>
+
+
